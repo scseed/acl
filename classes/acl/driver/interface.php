@@ -9,7 +9,6 @@
 interface Acl_Driver_Interface {
 
 	/* methods for classes that extend ACL as database drivers */
-	private function _get_acl_actions($roles, $resource, $regulation);
-	private function _get_acl_resources($roles, $regulation);
+	private function _grab_acl_rules();
 
 }

@@ -8,37 +8,28 @@
  */
 class Acl_Driver_Jelly extends Acl implements Acl_Driver_Interface {
 
-	/**
-	 * Queries DB for acl actions
-	 *
-	 * @param  array  $roles
-	 * @param  string $resource
-	 * @param  string $regulation
-	 * @return object Jelly_Collection
-	 */
-	private function _get_acl_actions($roles, $resource, $regulation)
+	private function _grab_acl_rules()
 	{
-		return Jelly::select('rules')
-			->where('role.name', 'IN', $roles)
-			->where('resource.name', '=', $resource)
-			->where('regulation', '=', $regulation)
-			->execute();;
-	}
-
-	/**
-	 * Queries DB for ACL resources
-	 *
-	 * @param  array  $roles
-	 * @param  string $regulation
-	 * @return object Jelly_Collection
-	 */
-	private function _get_acl_resources($roles, $regulation)
-	{
-		return Jelly::select('rules')
-			->distinct(TRUE)
-			->where('role.name', 'IN', $roles)
-			->where('regulation', '=', $regulation)
+		$acl = Jelly::select('acl')
+			->with('role')
+			->with('resource')
+			->with('action')
+			->order_by('role', 'ASC')
 			->execute();
+
+		foreach($acl as $acl_line)
+		{
+			$this->_acl[$acl_line->role->name] = array(
+				$acl_line->resource->name => array(
+					$acl_line->action->name => $acl_line->regulation
+				)
+			);
+		}
+		
+		if(empty($this->_acl))
+		{
+			die('ACL is empty. Fill it first!');
+		}
 	}
 
 } // End Acl_Driver_Jelly

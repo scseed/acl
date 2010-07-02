@@ -12,7 +12,10 @@ class Acl_Core {
 	// ACL Instances array
 	protected static $instances = array();
 
-	// CRUD action names
+	// ACL container
+	protected $_acl = array();
+
+	// Supported CRUD action names
 	protected $_actions   = array(
 		'create', 'read', 'update', 'delete'
 	);
@@ -46,6 +49,14 @@ class Acl_Core {
 	}
 
 	/**
+	 * Fullfill ACL container on init
+	 */
+	public function __construct()
+	{
+		$this->_grab_acl_rules();
+	}
+
+	/**
 	 * Inspects resources allowed to current $roles
 	 * 
 	 * @param  array  $roles
@@ -54,11 +65,12 @@ class Acl_Core {
 	 */
 	public function resources($roles, $regulation = 'allow')
 	{
-		$acl_rules = $this->_get_acl_resources($roles, $regulation);
-		foreach($acl_rules as $acl)
+		foreach($roles as $role)
 		{
-			$resources[] = $acl->resource->name;
+			$resources[] = $this->_acl[$role];
 		}
+
+		$resources = Arr::flatten($resources);
 
 		return $resources;
 
@@ -74,11 +86,9 @@ class Acl_Core {
 	 */
 	public function actions($roles, $resource, $regulation = 'allow')
 	{
-		$acl_rules = $this->_get_acl_actions($roles, $resource, $regulation);
-		
-		foreach($acl_rules as $acl)
+		foreach ($roles as $role)
 		{
-			$actions[] = $acl->action->name;
+			$actions[] = $this->_acl[$role][$resource];
 		}
 
 		return $actions;
