@@ -3,7 +3,7 @@
 /**
  * Class ACL Core
  * 
- * @todo make it work with hierarchical roles and resources structure
+ * @todo make it work with hierarchical roles structure (is it needed?)
  * @package ACL
  * @author avis <smgladkovskiy@gmail.com>
  */
@@ -17,7 +17,7 @@ abstract class Acl_Core {
 
 	// Supported CRUD action names
 	protected $_actions   = array(
-		'create', 'read', 'update', 'delete'
+		'create', 'read', 'update', 'delete', 'all'
 	);
 
 	/**
@@ -88,6 +88,7 @@ abstract class Acl_Core {
 	 */
 	public function is_allowed($roles, $resorce, $actions)
 	{
+		
 		$allowed_resources = $this->resources($roles);
 
 		$allowed_actions = Arr::get($allowed_resources, $resorce, NULL);
@@ -95,9 +96,9 @@ abstract class Acl_Core {
 		if($allowed_actions === NULL)
 			return FALSE;
 
-		foreach($allowed_actions as $action)
+		foreach($allowed_actions as $action_name => $regulation)
 		{
-			if( ! in_array($action, $allowed_actions))
+			if( ! in_array($action_name, $allowed_actions) AND $regulation != 'allow')
 			{
 				return FALSE;
 			}

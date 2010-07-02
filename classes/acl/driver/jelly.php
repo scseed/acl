@@ -19,9 +19,19 @@ class Acl_Driver_Jelly extends Acl implements Acl_Driver_Interface {
 
 		foreach($acl as $acl_line)
 		{
-			$this->_acl[$acl_line->role->name][$acl_line->resource->name][$acl_line->action->name] = $acl_line->regulation;
+			if(count($acl_line->resource->childs))
+			{
+				foreach($acl_line->resource->childs as $resource)
+				{
+					$this->_acl[$acl_line->role->name][$resource->name][$acl_line->action->name] = $acl_line->regulation;
+				}
+			}
+			else
+			{
+				$this->_acl[$acl_line->role->name][$acl_line->resource->name][$acl_line->action->name] = $acl_line->regulation;
+			}
 		}
-		
+
 		if(empty($this->_acl))
 		{
 			die('ACL is empty. Fill it first!');
