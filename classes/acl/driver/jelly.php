@@ -8,12 +8,12 @@
  */
 class Acl_Driver_Jelly extends Acl implements Acl_Driver_Interface {
 
+	/**
+	 * Loads all acl rules in $_acl container
+	 */
 	public function _grab_acl_rules()
 	{
 		$acl = Jelly::select('acl')
-			->with('role')
-			->with('resource')
-			->with('action')
 			->order_by('role', 'ASC')
 			->execute();
 

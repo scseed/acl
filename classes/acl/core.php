@@ -3,7 +3,7 @@
 /**
  * Class ACL Core
  * 
- * @todo make it work with hierarchical roles structure (is it needed?)
+ * @todo make it work with hierarchical roles structure (is it needed?) and to add assertions
  * @package ACL
  * @author avis <smgladkovskiy@gmail.com>
  */
@@ -53,7 +53,6 @@ abstract class Acl_Core {
 	 */
 	public function __construct()
 	{
-		
 		$this->_grab_acl_rules();
 	}
 
@@ -61,10 +60,9 @@ abstract class Acl_Core {
 	 * Inspects resources allowed to current $roles
 	 * 
 	 * @param  array  $roles
-	 * @param  string $regulation
 	 * @return array
 	 */
-	public function resources($roles, $regulation = 'allow')
+	public function resources($roles)
 	{
 		foreach($roles as $role)
 		{
@@ -88,7 +86,6 @@ abstract class Acl_Core {
 	 */
 	public function is_allowed($roles, $resorce, $actions)
 	{
-		
 		$allowed_resources = $this->resources($roles);
 
 		$allowed_actions = Arr::get($allowed_resources, $resorce, NULL);
@@ -103,7 +100,7 @@ abstract class Acl_Core {
 				return FALSE;
 			}
 		}
-		
+
 		return TRUE;
 	}
 
