@@ -10,5 +10,6 @@ interface Acl_Driver_Interface {
 
 	/* methods for classes that extend ACL as database drivers */
 	public function _grab_acl_rules();
+	public function _add_resource($resournce_name);
 
 }

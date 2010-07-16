@@ -32,10 +32,34 @@ class Acl_Driver_Jelly extends Acl implements Acl_Driver_Interface {
 			}
 		}
 
+		$this->_resources = Jelly::select('resource')->execute()->as_array('name', 'id');
+
+
 		if(empty($this->_acl))
 		{
 			die('ACL is empty. Fill it first!');
 		}
+	}
+
+	/**
+	 * Adds missing resource to a resources table
+	 *
+	 * @param string $resournce_name
+	 */
+	public function _add_resource($resournce_name)
+	{
+		$resource = Jelly::factory('resource', array('name' => $resournce_name));
+
+		try
+		{
+			$resource->save();
+		}
+		catch(Validate_Exception $e)
+		{
+			die('There is no resources table in your database!');
+		}
+
+		array_push($this->_resources, array($resource->name => $resource->id));
 	}
 
 } // End Acl_Driver_Jelly

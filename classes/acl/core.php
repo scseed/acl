@@ -15,6 +15,8 @@ abstract class Acl_Core {
 	// ACL container
 	protected $_acl = array();
 
+	protected $_resources = array();
+
 	// Supported CRUD action names
 	protected $_actions   = array(
 		'create', 'read', 'update', 'delete', 'all'
@@ -86,7 +88,12 @@ abstract class Acl_Core {
 	 */
 	public function is_allowed($roles, $resorce, $actions)
 	{
-		$allowed_resources = $this->resources($roles);
+		if( ! Arr::get($this->_resources, $resorce, FALSE))
+		{
+			$this->_add_resource($resorce);
+		}
+
+		$allowed_resources = $this->resources($roles, $resorce);
 
 		$allowed_actions = Arr::get($allowed_resources, $resorce, NULL);
 
