@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS `acls` (
   `id` smallint(5) unsigned NOT NULL auto_increment,
-  `role_id` smallint(5) unsigned NOT NULL,
+  `role_id` int(11) unsigned NOT NULL,
   `resource_id` smallint(5) unsigned NOT NULL,
   `action_id` tinyint(3) unsigned NOT NULL,
   `regulation` enum('allow','deny') NOT NULL default 'allow',
@@ -46,7 +46,8 @@ ALTER TABLE `acls`
   ADD CONSTRAINT `fk_acl_role` FOREIGN KEY (`role_id`) REFERENCES `roles` (`id`) ON UPDATE CASCADE;
 
 ALTER TABLE `resources`
-  ADD CONSTRAINT `fk_resource_parent` FOREIGN KEY (`parent_id`) REFERENCES `resources` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+  ADD CONSTRAINT `fk_resource_parent` FOREIGN KEY (`parent_id`) REFERENCES `resources` (`id`) ON UPDATE CASCADE;
 
 ALTER TABLE `roles`
-  ADD CONSTRAINT `fk_role_parent` FOREIGN KEY (`parent_id`) REFERENCES `roles` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+  ADD column `parent_id` int(11) UNSIGNED default NULL AFTER `id`,
+  ADD CONSTRAINT `fk_role_parent` FOREIGN KEY (`parent_id`) REFERENCES `roles` (`id`) ON UPDATE CASCADE;
