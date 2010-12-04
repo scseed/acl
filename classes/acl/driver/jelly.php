@@ -13,9 +13,9 @@ class Acl_Driver_Jelly extends Acl implements Acl_Driver_Interface {
 	 */
 	public function _grab_acl_rules()
 	{
-		$acl = Jelly::select('acl')
+		$acl = Jelly::query('acl')
 			->order_by('role', 'ASC')
-			->execute();
+			->select();
 
 		foreach($acl as $acl_line)
 		{
@@ -32,7 +32,7 @@ class Acl_Driver_Jelly extends Acl implements Acl_Driver_Interface {
 			}
 		}
 
-		$this->_resources = Jelly::select('resource')->execute()->as_array('name', 'id');
+		$this->_resources = Jelly::query('resource')->execute()->as_array('name', 'id');
 
 
 		if(empty($this->_acl))
