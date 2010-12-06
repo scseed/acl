@@ -48,7 +48,7 @@ class Acl_Driver_Jelly extends Acl implements Acl_Driver_Interface {
 	 */
 	public function _add_resource($resournce_name)
 	{
-		$resource = Jelly::factory('resource', array('name' => $resournce_name));
+		$resource = Jelly::factory('resource')->set(array('name' => $resournce_name));
 
 		try
 		{
