@@ -19,21 +19,46 @@ class Acl_Driver_Jelly extends Acl implements Acl_Driver_Interface {
 
 		foreach($acl as $acl_line)
 		{
+			if($acl_line->resource->parent->id === NULL)
+			{
+				$route_name = $acl_line->resource->name;
+			}
+			else
+			{
+				$route_name = $acl_line->resource->parent->name;
+			}
+
 			if(count($acl_line->resource->childs))
 			{
 				foreach($acl_line->resource->childs as $resource)
 				{
-					$this->_acl[$acl_line->role->name][$resource->name][$acl_line->action->name] = $acl_line->regulation;
+					$this->_acl[] = array(
+						'role' => $acl_line->role->name,
+						'route' => $route_name,
+						'resource' => $resource->name,
+						'action' => $acl_line->action->name,
+						'regulation' => $acl_line->regulation
+					);
 				}
 			}
 			else
 			{
-				$this->_acl[$acl_line->role->name][$acl_line->resource->name][$acl_line->action->name] = $acl_line->regulation;
+				$this->_acl[] = array(
+					'role' => $acl_line->role->name,
+					'route' => $route_name,
+					'resource' => $acl_line->resource->name,
+					'action' => $acl_line->action->name,
+					'regulation' => $acl_line->regulation
+				);
 			}
 		}
 
-		$this->_resources = Jelly::select('resource')->execute()->as_array('name', 'id');
+		$resources = Jelly::select('resource')->with('parent')->where('parent.id', '!=', NULL)->execute();
 
+		foreach($resources as $resource)
+		{
+			$this->_resources[$resource->parent->name][$resource->name] = TRUE;
+		}
 
 		if(empty($this->_acl))
 		{
@@ -46,9 +71,35 @@ class Acl_Driver_Jelly extends Acl implements Acl_Driver_Interface {
 	 *
 	 * @param string $resournce_name
 	 */
-	public function _add_resource($resournce_name)
+	public function _add_resource($resournce_name, $route_name)
 	{
-		$resource = Jelly::factory('resource', array('name' => $resournce_name));
+		$route = Jelly::select('resource')
+			->with('parent')
+			->where('parent.id', '=', NULL)
+			->where('name', '=', $route_name)
+			->limit(1)
+			->execute();
+
+		if( ! $route->loaded())
+		{
+			$route = Jelly::factory('resource', array('name' => $route_name));
+
+			try
+			{
+				$route->save();
+			}
+			catch(Validate_Exception $e)
+			{
+				die('There is no resources table in your database!');
+			}
+		}
+
+		$resource = Jelly::factory('resource',
+			array(
+				'name' => $resournce_name,
+				'parent' => $route->id,
+			)
+		);
 
 		try
 		{
