@@ -5,6 +5,8 @@
  *
  * @package ACL
  * @author avis <smgladkovskiy@gmail.com>
+ *
+ * @todo Use caching in Jelly, not by Kohana::cache()
  */
 class Acl_Driver_Jelly extends Acl implements Acl_Driver_Interface {
 
@@ -13,24 +15,46 @@ class Acl_Driver_Jelly extends Acl implements Acl_Driver_Interface {
 	 */
 	public function _grab_acl_rules()
 	{
-		$acl = Jelly::select('acl')
-			->order_by('role', 'ASC')
-			->execute();
+		$acl = Kohana::cache('acl');
+
+		if( ! $acl)
+		{
+			$acl = Jelly::select('acl')
+				->order_by('role', 'ASC')
+				->execute();
+		    Kohana::cache('acl', $acl, 36000);
+		}
 
 		foreach($acl as $acl_line)
 		{
-			if($acl_line->resource->parent->id === NULL)
+			$parent_resource = Kohana::cache($acl_line->resource->id . '_parent');
+
+			if( ! $parent_resource)
+			{
+				$parent_resource = $acl_line->resource->parent->load_values(array('id', 'name'));
+			    Kohana::cache($acl_line->resource->id . '_parent', $parent_resource, 36000);
+			}
+
+			if($parent_resource->id === NULL)
 			{
 				$route_name = $acl_line->resource->name;
 			}
 			else
 			{
-				$route_name = $acl_line->resource->parent->name;
+				$route_name = $parent_resource->name;
 			}
 
-			if(count($acl_line->resource->childs))
+			$child_resources = Kohana::cache($acl_line->resource->id . '_childs');
+
+			if( ! $child_resources)
 			{
-				foreach($acl_line->resource->childs as $resource)
+				$child_resources =  $acl_line->resource->childs;
+				Kohana::cache($acl_line->resource->id . '_childs', $child_resources, 36000);
+			}
+
+			if(count($child_resources))
+			{
+				foreach($child_resources as $resource)
 				{
 					$this->_acl[] = array(
 						'role' => $acl_line->role->name,
@@ -53,11 +77,19 @@ class Acl_Driver_Jelly extends Acl implements Acl_Driver_Interface {
 			}
 		}
 
-		$resources = Jelly::select('resource')->with('parent')->where('parent.id', '!=', NULL)->execute();
+		$resources = Jelly::select('resource')->where('parent.id', '!=', NULL)->execute();
 
 		foreach($resources as $resource)
 		{
-			$this->_resources[$resource->parent->name][$resource->name] = TRUE;
+			$parent_resource_name = Kohana::cache($resource->id . '_parent_name');
+
+			if( ! $parent_resource_name)
+			{
+				$parent_resource_name = $resource->parent->name;
+			    Kohana::cache($resource->id . '_parent_name', $parent_resource_name, 36000);
+			}
+
+			$this->_resources[$parent_resource_name][$resource->name] = TRUE;
 		}
 
 		if(empty($this->_acl))
@@ -74,7 +106,6 @@ class Acl_Driver_Jelly extends Acl implements Acl_Driver_Interface {
 	public function _add_resource($resournce_name, $route_name)
 	{
 		$route = Jelly::select('resource')
-			->with('parent')
 			->where('parent.id', '=', NULL)
 			->where('name', '=', $route_name)
 			->limit(1)
