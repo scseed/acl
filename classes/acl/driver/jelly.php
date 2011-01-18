@@ -15,24 +15,22 @@ class Acl_Driver_Jelly extends Acl implements Acl_Driver_Interface {
 	 */
 	public function _grab_acl_rules()
 	{
-		$acl = Kohana::cache('acl');
-
+		$acl = Cache::instance()->get('acl');
 		if( ! $acl)
 		{
 			$acl = Jelly::select('acl')
 				->order_by('role', 'ASC')
 				->execute();
-		    Kohana::cache('acl', $acl, 36000);
+		    Cache::instance()->set('acl', $acl);
 		}
 
-		foreach($acl as $acl_line)
+ 		foreach($acl as $acl_line)
 		{
-			$parent_resource = Kohana::cache($acl_line->resource->id . '_parent');
-
+			$parent_resource = Cache::instance()->get($acl_line->resource->id . '_parent');
 			if( ! $parent_resource)
 			{
 				$parent_resource = $acl_line->resource->parent->load_values(array('id', 'name'));
-			    Kohana::cache($acl_line->resource->id . '_parent', $parent_resource, 36000);
+				Cache::instance()->set($acl_line->resource->id . '_parent', $parent_resource);
 			}
 
 			if($parent_resource->id === NULL)
@@ -44,12 +42,11 @@ class Acl_Driver_Jelly extends Acl implements Acl_Driver_Interface {
 				$route_name = $parent_resource->name;
 			}
 
-			$child_resources = Kohana::cache($acl_line->resource->id . '_childs');
-
+			$child_resources = Cache::instance()->get($acl_line->resource->id . '_childs');
 			if( ! $child_resources)
 			{
 				$child_resources =  $acl_line->resource->childs;
-				Kohana::cache($acl_line->resource->id . '_childs', $child_resources, 36000);
+				Cache::instance()->set($acl_line->resource->id . '_childs', $child_resources);
 			}
 
 			if(count($child_resources))
@@ -77,16 +74,24 @@ class Acl_Driver_Jelly extends Acl implements Acl_Driver_Interface {
 			}
 		}
 
-		$resources = Jelly::select('resource')->where('parent.id', '!=', NULL)->execute();
+		$resources = Cache::instance()->get('all_child_resources');
+
+		if( ! $resources)
+		{
+			$resources = Jelly::select('resource')->where('parent', '!=', NULL)->execute();
+		    Cache::instance()->set('all_child_resources', $resources);
+		}
+
 
 		foreach($resources as $resource)
 		{
-			$parent_resource_name = Kohana::cache($resource->id . '_parent_name');
+			$parent_resource_name = Cache::instance()->get($resource->id . '_parent_name');
+
 
 			if( ! $parent_resource_name)
 			{
 				$parent_resource_name = $resource->parent->name;
-			    Kohana::cache($resource->id . '_parent_name', $parent_resource_name, 36000);
+			    Cache::instance()->set($resource->id . '_parent_name', $parent_resource_name);
 			}
 
 			$this->_resources[$parent_resource_name][$resource->name] = TRUE;
