@@ -34,8 +34,7 @@ abstract class Acl_Core {
 	 */
 	public static function instance($auth = 'default')
 	{
-		// if $auth is not defined, gets default
-		// auth supplier from the config file
+		// if $auth is not defined, gets default auth supplier from the config file
 		if($auth === 'default')
 		{
 			$config = Kohana::config('acl');
@@ -68,15 +67,11 @@ abstract class Acl_Core {
 	 * @param  array  $roles
 	 * @return array
 	 */
-	public function resources($roles)
+	public function allowed_resources($roles)
 	{
 		$resources = array();
 		foreach($roles as $role)
 		{
-//			if(array_key_exists($role, $this->_acl))
-//			{
-//				$resources = $this->_acl[$role];
-//			}
 			foreach($this->_acl as $acl_line)
 			{
 				if($acl_line['role'] == $role AND $acl_line['regulation'] == 'allow')
@@ -100,35 +95,38 @@ abstract class Acl_Core {
 	 */
 	public function is_allowed($roles, $_resource, $actions)
 	{
-		$route_defaults = Request::instance()->route->get_defaults();
 		$resource_path = implode('.', $_resource);
 
+		// checking existance of a route in acl. If not => user is not alowed to do anything there
+		$allowed_resources = $this->allowed_resources($roles, $_resource);
+		if( ! array_key_exists($resource_path, $allowed_resources))
+		{
+			return FALSE;
+		}
+
+		// Checking resource existance
 		if( ! Arr::get($this->_resources, $resource_path, FALSE))
 		{
 			$this->_add_resource($_resource);
 		}
 
+		// counting minimal route score, based on acl
 		$route_action = 0;
 		foreach($actions as $action)
 		{
 			$route_action += $this->_actions[$action];
 		}
 
-		$allowed_resources = $this->resources($roles, $_resource);
-
-		if( ! array_key_exists($resource_path, $allowed_resources))
-		{
-			return FALSE;
-		}
-
 		$route_regulations = Arr::get($allowed_resources, $resource_path);
 
+		// counting user score for the route, based on acl
 		$user_action = 0;
 		foreach($route_regulations as $route_regulation)
 		{
 			$user_action += $this->_actions[$route_regulation];
 		}
 
+		// comparing scores
 		if($route_action > $user_action)
 		{
 			return FALSE;

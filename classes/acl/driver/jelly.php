@@ -16,10 +16,11 @@ class Acl_Driver_Jelly extends Acl implements Acl_Driver_Interface {
 	public function _grab_acl_rules()
 	{
 		$resources_paths = NULL;
-		$resources = Jelly::query('resource')->select();
+		$resources = NULL;
+		$_resources = Jelly::query('resource')->select();
 		$acl = Jelly::query('acl')->select();
 
-		foreach($resources as $resource)
+		foreach($_resources as $resource)
 		{
 			$resource_path = $resource->route_name . '.'
 			               . $resource->directory . '.'
@@ -28,11 +29,14 @@ class Acl_Driver_Jelly extends Acl implements Acl_Driver_Interface {
 			               . $resource->object_id;
 			$resources_paths[$resource->id] = $resource_path;
 			$this->_resources[$resource_path] = $resource;
+			$resources[$resource->parent->id][$resource->id] = $resource;
 		}
 
  		foreach($acl as $acl_line)
 		{
-			$child_resources =  $acl_line->resource->childs;
+			$child_resources = (isset($resources[$acl_line->resource->id]))
+			                    ? $resources[$acl_line->resource->id]
+			                    : NULL;
 
 			if(count($child_resources))
 			{
@@ -98,21 +102,13 @@ class Acl_Driver_Jelly extends Acl implements Acl_Driver_Interface {
 		try
 		{
 			$new_resource->save();
+			$this->_grab_acl_rules();
+			return;
 		}
 		catch(Validate_Exception $e)
 		{
 			die('There is no resources table in your database!');
 		}
-
-		$resource_path = $new_resource->route_name . '.'
-			           . $new_resource->directory . '.'
-			           . $new_resource->controller . '.'
-			           . $new_resource->action . '.'
-			           . $new_resource->object_id;
-
-		$this->_resources[$resource_path] = $new_resource->as_array();
-
-		return;
 	}
 
 } // End Acl_Driver_Jelly
