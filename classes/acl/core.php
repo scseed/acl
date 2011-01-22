@@ -19,7 +19,11 @@ abstract class Acl_Core {
 
 	// Supported CRUD action names
 	protected $_actions   = array(
-		'create', 'read', 'update', 'delete', 'all'
+		'all'    => 10,
+		'read'   => 1,
+		'create' => 2,
+		'update' => 3,
+		'delete' => 4,
 	);
 
 	/**
@@ -66,6 +70,7 @@ abstract class Acl_Core {
 	 */
 	public function resources($roles)
 	{
+		$resources = array();
 		foreach($roles as $role)
 		{
 //			if(array_key_exists($role, $this->_acl))
@@ -74,9 +79,9 @@ abstract class Acl_Core {
 //			}
 			foreach($this->_acl as $acl_line)
 			{
-				if($acl_line['role'] == $role)
+				if($acl_line['role'] == $role AND $acl_line['regulation'] == 'allow')
 				{
-					$resources[ $acl_line['route'] . '.' . $acl_line['resource']] = array($acl_line['action'] => $acl_line['regulation']);
+					$resources[$acl_line['resource_path']][$acl_line['role']] = $acl_line['action'];
 				}
 			}
 		}
@@ -89,37 +94,44 @@ abstract class Acl_Core {
 	 * in current $resource
 	 *
 	 * @param  array  $roles
-	 * @param  array $resource as array('route_name' => '...', 'resource' => '...')
+	 * @param  array $resource as array('route_name' => '...', 'directory' => '...', 'controller' => '...', 'action' => '...', 'object_id' => '...')
 	 * @param  array  $actions
 	 * @return boolean
 	 */
 	public function is_allowed($roles, $_resource, $actions)
 	{
 		$route_defaults = Request::instance()->route->get_defaults();
-		$route_name = arr::get($_resource, 'route_name', 'default');
-		$resource = arr::get($_resource, 'resource', $route_defaults['controller']);
+		$resource_path = implode('.', $_resource);
 
-		$resource_path = $route_name . '.' . $resource;
-
-		if( ! Arr::path($this->_resources, $resource_path, FALSE))
+		if( ! Arr::get($this->_resources, $resource_path, FALSE))
 		{
-			$this->_add_resource($resource, $route_name);
+			$this->_add_resource($_resource);
 		}
 
-		$allowed_resources = $this->resources($roles, $resource);
-
-		$allowed_actions = Arr::get($allowed_resources, $resource_path, NULL);
-
-		if($allowed_actions === NULL)
-			return FALSE;
-
-
-		foreach($allowed_actions as $action_name => $regulation)
+		$route_action = 0;
+		foreach($actions as $action)
 		{
-			if( ! in_array($resource_path, $allowed_actions) AND $regulation != 'allow')
-			{
-				return FALSE;
-			}
+			$route_action += $this->_actions[$action];
+		}
+
+		$allowed_resources = $this->resources($roles, $_resource);
+
+		if( ! array_key_exists($resource_path, $allowed_resources))
+		{
+			return FALSE;
+		}
+
+		$route_regulations = Arr::get($allowed_resources, $resource_path);
+
+		$user_action = 0;
+		foreach($route_regulations as $route_regulation)
+		{
+			$user_action += $this->_actions[$route_regulation];
+		}
+
+		if($route_action > $user_action)
+		{
+			return FALSE;
 		}
 
 		return TRUE;

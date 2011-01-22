@@ -15,39 +15,24 @@ class Acl_Driver_Jelly extends Acl implements Acl_Driver_Interface {
 	 */
 	public function _grab_acl_rules()
 	{
-		$acl = Cache::instance()->get('acl');
-		if( ! $acl)
+		$resources_paths = NULL;
+		$resources = Jelly::query('resource')->select();
+		$acl = Jelly::query('acl')->select();
+
+		foreach($resources as $resource)
 		{
-			$acl = Jelly::select('acl')
-				->order_by('role', 'ASC')
-				->execute();
-		    Cache::instance()->set('acl', $acl);
+			$resource_path = $resource->route_name . '.'
+			               . $resource->directory . '.'
+			               . $resource->controller . '.'
+			               . $resource->action . '.'
+			               . $resource->object_id;
+			$resources_paths[$resource->id] = $resource_path;
+			$this->_resources[$resource_path] = $resource;
 		}
 
  		foreach($acl as $acl_line)
 		{
-			$parent_resource = Cache::instance()->get($acl_line->resource->id . '_parent');
-			if( ! $parent_resource)
-			{
-				$parent_resource = $acl_line->resource->parent->load_values(array('id', 'name'));
-				Cache::instance()->set($acl_line->resource->id . '_parent', $parent_resource);
-			}
-
-			if($parent_resource->id === NULL)
-			{
-				$route_name = $acl_line->resource->name;
-			}
-			else
-			{
-				$route_name = $parent_resource->name;
-			}
-
-			$child_resources = Cache::instance()->get($acl_line->resource->id . '_childs');
-			if( ! $child_resources)
-			{
-				$child_resources =  $acl_line->resource->childs;
-				Cache::instance()->set($acl_line->resource->id . '_childs', $child_resources);
-			}
+			$child_resources =  $acl_line->resource->childs;
 
 			if(count($child_resources))
 			{
@@ -55,8 +40,7 @@ class Acl_Driver_Jelly extends Acl implements Acl_Driver_Interface {
 				{
 					$this->_acl[] = array(
 						'role' => $acl_line->role->name,
-						'route' => $route_name,
-						'resource' => $resource->name,
+						'resource_path' => $resources_paths[$resource->id],
 						'action' => $acl_line->action->name,
 						'regulation' => $acl_line->regulation
 					);
@@ -66,40 +50,16 @@ class Acl_Driver_Jelly extends Acl implements Acl_Driver_Interface {
 			{
 				$this->_acl[] = array(
 					'role' => $acl_line->role->name,
-					'route' => $route_name,
-					'resource' => $acl_line->resource->name,
+					'resource_path' => $resources_paths[$acl_line->resource->id],
 					'action' => $acl_line->action->name,
 					'regulation' => $acl_line->regulation
 				);
 			}
 		}
 
-		$resources = Cache::instance()->get('all_child_resources');
-
-		if( ! $resources)
-		{
-			$resources = Jelly::select('resource')->where('parent', '!=', NULL)->execute();
-		    Cache::instance()->set('all_child_resources', $resources);
-		}
-
-
-		foreach($resources as $resource)
-		{
-			$parent_resource_name = Cache::instance()->get($resource->id . '_parent_name');
-
-
-			if( ! $parent_resource_name)
-			{
-				$parent_resource_name = $resource->parent->name;
-			    Cache::instance()->set($resource->id . '_parent_name', $parent_resource_name);
-			}
-
-			$this->_resources[$parent_resource_name][$resource->name] = TRUE;
-		}
-
 		if(empty($this->_acl))
 		{
-			die('ACL is empty. Fill it first!');
+			throw new Kohana_Exception('ACL is empty. Fill it first!');
 		}
 	}
 
@@ -108,17 +68,18 @@ class Acl_Driver_Jelly extends Acl implements Acl_Driver_Interface {
 	 *
 	 * @param string $resournce_name
 	 */
-	public function _add_resource($resournce_name, $route_name)
+	public function _add_resource(array $resource)
 	{
-		$route = Jelly::select('resource')
-			->where('parent.id', '=', NULL)
-			->where('name', '=', $route_name)
+		$route = Jelly::query('resource')
+			->where('resource:parent.id', '=', NULL)
+			->where('route_name', '=', $resource['route_name'])
 			->limit(1)
-			->execute();
+			->select();
 
 		if( ! $route->loaded())
 		{
-			$route = Jelly::factory('resource', array('name' => $route_name));
+			$route = Jelly::factory('resource');
+			$route->set(array('route_name' => $resource['route_name']));
 
 			try
 			{
@@ -126,27 +87,32 @@ class Acl_Driver_Jelly extends Acl implements Acl_Driver_Interface {
 			}
 			catch(Validate_Exception $e)
 			{
-				die('There is no resources table in your database!');
+				throw new Kohana_Exception('There is no resources table in your database!');
 			}
 		}
 
-		$resource = Jelly::factory('resource',
-			array(
-				'name' => $resournce_name,
-				'parent' => $route->id,
-			)
-		);
+		$resource['parent'] = $route->id;
+		$new_resource = Jelly::factory('resource');
+		$new_resource->set($resource);
 
 		try
 		{
-			$resource->save();
+			$new_resource->save();
 		}
 		catch(Validate_Exception $e)
 		{
 			die('There is no resources table in your database!');
 		}
 
-		array_push($this->_resources, array($resource->name => $resource->id));
+		$resource_path = $new_resource->route_name . '.'
+			           . $new_resource->directory . '.'
+			           . $new_resource->controller . '.'
+			           . $new_resource->action . '.'
+			           . $new_resource->object_id;
+
+		$this->_resources[$resource_path] = $new_resource->as_array();
+
+		return;
 	}
 
 } // End Acl_Driver_Jelly
