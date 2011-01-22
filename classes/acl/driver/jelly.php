@@ -17,8 +17,8 @@ class Acl_Driver_Jelly extends Acl implements Acl_Driver_Interface {
 	{
 		$resources_paths = NULL;
 		$resources = NULL;
-		$_resources = Jelly::query('resource')->select();
-		$acl = Jelly::query('acl')->select();
+		$_resources = Jelly::select('resource')->execute();
+		$acl = Jelly::select('acl')->execute();
 
 		foreach($_resources as $resource)
 		{
@@ -74,8 +74,8 @@ class Acl_Driver_Jelly extends Acl implements Acl_Driver_Interface {
 	 */
 	public function _add_resource(array $resource)
 	{
-		$route = Jelly::query('resource')
-			->where('resource:parent.id', '=', NULL)
+		$route = Jelly::select('resource')
+			->where('parent.id', '=', NULL)
 			->where('route_name', '=', $resource['route_name'])
 			->limit(1)
 			->select();
