@@ -5,8 +5,6 @@
  *
  * @package ACL
  * @author avis <smgladkovskiy@gmail.com>
- *
- * @todo Use caching in Jelly, not by Kohana::cache()
  */
 class Acl_Driver_Jelly_Unstable extends Acl implements Acl_Driver_Interface {
 
@@ -16,9 +14,10 @@ class Acl_Driver_Jelly_Unstable extends Acl implements Acl_Driver_Interface {
 	public function _grab_acl_rules()
 	{
 		$resources_paths = NULL;
-		$resources = NULL;
+		$resources       = NULL;
+
 		$_resources = Jelly::query('resource')->select();
-		$acl = Jelly::query('acl')->select();
+		$acl        = Jelly::query('acl')->select();
 
 		foreach($_resources as $resource)
 		{
@@ -27,8 +26,8 @@ class Acl_Driver_Jelly_Unstable extends Acl implements Acl_Driver_Interface {
 			               . $resource->controller . '.'
 			               . $resource->action . '.'
 			               . $resource->object_id;
-			$resources_paths[$resource->id] = $resource_path;
-			$this->_resources[$resource_path] = $resource;
+			$resources_paths[$resource->id]                  = $resource_path;
+			$this->_resources[$resource_path]                = $resource;
 			$resources[$resource->parent->id][$resource->id] = $resource;
 		}
 
@@ -43,20 +42,20 @@ class Acl_Driver_Jelly_Unstable extends Acl implements Acl_Driver_Interface {
 				foreach($child_resources as $resource)
 				{
 					$this->_acl[] = array(
-						'role' => $acl_line->role->name,
+						'role'          => $acl_line->role->name,
 						'resource_path' => $resources_paths[$resource->id],
-						'action' => $acl_line->action->name,
-						'regulation' => $acl_line->regulation
+						'action'        => $acl_line->action->name,
+						'regulation'    => $acl_line->regulation
 					);
 				}
 			}
 			else
 			{
 				$this->_acl[] = array(
-					'role' => $acl_line->role->name,
+					'role'          => $acl_line->role->name,
 					'resource_path' => $resources_paths[$acl_line->resource->id],
-					'action' => $acl_line->action->name,
-					'regulation' => $acl_line->regulation
+					'action'        => $acl_line->action->name,
+					'regulation'    => $acl_line->regulation
 				);
 			}
 		}
@@ -96,7 +95,7 @@ class Acl_Driver_Jelly_Unstable extends Acl implements Acl_Driver_Interface {
 		}
 
 		$resource['parent'] = $route->id;
-		$new_resource = Jelly::factory('resource');
+		$new_resource       = Jelly::factory('resource');
 		$new_resource->set($resource);
 
 		try
@@ -111,4 +110,4 @@ class Acl_Driver_Jelly_Unstable extends Acl implements Acl_Driver_Interface {
 		}
 	}
 
-} // End Acl_Driver_Jelly
+} // End Acl_Driver_Jelly_Unstable

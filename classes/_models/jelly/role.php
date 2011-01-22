@@ -3,6 +3,7 @@
 /**
  * Role Model for Jelly ORM
  *
+ * @package ACL
  * @author avis <smgladkovskiy@gmail.com>
  */
 class Model_Role extends Jelly_Model {
@@ -16,25 +17,19 @@ class Model_Role extends Jelly_Model {
 	{
 		$meta->table('roles')
 			->fields(array(
-				'id' => Jelly::field('Primary'),
+				'id'     => Jelly::field('Primary'),
 				'parent' => Jelly::field('BelongsTo', array(
-					'null' => TRUE,
-					'editable' => FALSE,
-					'foreign' => 'role',
-					'column' => 'parent_id',
-					'default' => NULL,
-					'rules' => array(
-						'numeric' => NULL,
-					),
-					'label' => 'Parent role',
+					'foreign'  => 'role',
+					'column'   => 'parent_id',
+					'default'  => NULL,
+					'rules'    => array(
+						'numeric' => array(TRUE),
+					)
 				)),
 				'name' => Jelly::field('String', array(
-					'empty' => FALSE,
-					'default' => '',
-					'rules' => array(
-						'not_empty' => NULL,
-					),
-					'label' => 'Role name',
+					'rules'   => array(
+						'not_empty' => array(TRUE),
+					)
 				)),
 				'description' => Jelly::field('String'),
 			))

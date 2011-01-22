@@ -3,7 +3,6 @@
 /**
  * Class ACL Core
  *
- * @todo make it work with hierarchical roles structure (is it needed?) and to add assertions
  * @package ACL
  * @author avis <smgladkovskiy@gmail.com>
  */
@@ -15,9 +14,10 @@ abstract class Acl_Core {
 	// ACL container
 	protected $_acl = array();
 
+	// resources container
 	protected $_resources = array();
 
-	// Supported CRUD action names
+	// Supported CRUD action names and it scores to count and compare
 	protected $_actions   = array(
 		'all'    => 10,
 		'read'   => 1,
@@ -38,7 +38,7 @@ abstract class Acl_Core {
 		if($auth === 'default')
 		{
 			$config = Kohana::config('acl');
-			$auth = $config['default_auth_supplier'];
+			$auth   = $config['default_auth_supplier'];
 		}
 
 		if( ! in_array($auth, self::$instances))

@@ -3,6 +3,7 @@
 /**
  * Action Model for Jelly ORM
  *
+ * @package ACL
  * @author avis <smgladkovskiy@gmail.com>
  */
 class Model_Action extends Jelly_Model {
@@ -16,7 +17,7 @@ class Model_Action extends Jelly_Model {
 	{
 		$meta->table('actions')
 			->fields(array(
-				'id' => Jelly::field('Primary'),
+				'id'   => Jelly::field('Primary'),
 				'name' => Jelly::field('String'),
 			));
 	}

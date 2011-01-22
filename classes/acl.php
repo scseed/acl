@@ -2,7 +2,7 @@
 
 /**
  * Class Acl
- * 
+ *
  * @package ACL
  * @author avis <smgladkovskiy@gmail.com>
  */
