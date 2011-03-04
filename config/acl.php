@@ -2,6 +2,6 @@
 
 return array(
 
-	'default_auth_supplier' => 'auth',
+	'ORM_driver' => 'Jelly_unstable',
 
 );

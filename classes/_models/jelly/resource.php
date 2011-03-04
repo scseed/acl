@@ -38,7 +38,7 @@ class Model_Resource extends Jelly_Model {
 					'allow_null' => TRUE,
 					'default'    => NULL,
 				)),
-				'object_id' => Jelly::field('String', array(
+				'params' => Jelly::field('Serialized', array(
 					'allow_null' => TRUE,
 					'default'   => NULL,
 				)),

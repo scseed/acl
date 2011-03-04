@@ -18,39 +18,23 @@ abstract class Acl_Core {
 	protected $_resources = array();
 
 	// Supported CRUD action names and it scores to count and compare
-	protected $_actions   = array(
-		'all'    => 10,
-		'read'   => 1,
-		'create' => 2,
-		'update' => 3,
-		'delete' => 4,
-	);
+	protected $_actions   = array();
 
 	/**
 	 * ACL instance initiation
 	 *
 	 * @param  string $auth Auth supplier
-	 * @return object ALC
+	 * @return object ACL
 	 */
-	public static function instance($auth = 'default')
+	public static function instance($type = 'default')
 	{
 		// if $auth is not defined, gets default auth supplier from the config file
-		if($auth === 'default')
-		{
-			$config = Kohana::config('acl');
-			$auth   = $config['default_auth_supplier'];
-		}
+		$config = Kohana::config('acl');
 
-		if( ! in_array($auth, self::$instances))
-		{
-			$auth_config = Kohana::config($auth);
+		$acl_driver = 'Acl_Driver_' . ucfirst($config->ORM_driver);
+		self::$instances[$type] = new $acl_driver;
 
-			$acl_driver = 'Acl_Driver_' . ucfirst($auth_config['driver']);
-
-			self::$instances[$auth] = new $acl_driver;
-		}
-
-		return self::$instances[$auth];
+		return self::$instances[$type];
 	}
 
 	/**
@@ -58,7 +42,9 @@ abstract class Acl_Core {
 	 */
 	public function __construct()
 	{
+		$this->_grab_resources();
 		$this->_grab_acl_rules();
+		$this->_grab_actions();
 	}
 
 	/**
@@ -93,12 +79,28 @@ abstract class Acl_Core {
 	 * @param  array  $actions
 	 * @return boolean
 	 */
-	public function is_allowed($roles, $_resource, $actions)
+	public function is_allowed($roles, Request $request, $actions = array())
 	{
-		$resource_path = implode('.', $_resource);
+		$route = $request->route();
+
+		$directory  = ($request->directory() == '')         ? NULL : $request->directory();
+		$controller = ($request->controller() == 'welcome') ? NULL : $request->controller();
+		$action     = ($request->action() == 'index')       ? NULL : $request->action();
+		$param      = NULL; // @todo: think how it could be used...
+
+		$resource_path = array(
+			$route->name($request->route()),
+			$directory,
+			$controller,
+			$action,
+			$param,
+		);
+
+		$resource_path = implode('.', $resource_path);
 
 		// checking existance of a route in acl. If not => user is not alowed to do anything there
-		$allowed_resources = $this->allowed_resources($roles, $_resource);
+		$allowed_resources = $this->allowed_resources($roles);
+
 		if( ! array_key_exists($resource_path, $allowed_resources))
 		{
 			return FALSE;
@@ -107,7 +109,7 @@ abstract class Acl_Core {
 		// Checking resource existance
 		if( ! Arr::get($this->_resources, $resource_path, FALSE))
 		{
-			$this->_add_resource($_resource);
+//			$this->_add_resource($_resource);
 		}
 
 		// counting minimal route score, based on acl
@@ -125,6 +127,7 @@ abstract class Acl_Core {
 		{
 			$user_action += $this->_actions[$route_regulation];
 		}
+
 
 		// comparing scores
 		if($route_action > $user_action)

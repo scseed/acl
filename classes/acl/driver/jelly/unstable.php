@@ -8,62 +8,84 @@
  */
 class Acl_Driver_Jelly_Unstable extends Acl implements Acl_Driver_Interface {
 
+	public function _grab_resources()
+	{
+		$resources       = Jelly::query('resource')->select();
+		$resources_paths = array();
+		$resources_assoc = array();
+
+		foreach($resources as $resource)
+		{
+			$resource_path = array(
+				$resource->route_name,
+				$resource->directory,
+				$resource->controller,
+				$resource->action,
+				($resource->params) ? serialize($resource->params) : NULL
+			);
+
+			$resource_path = implode('.', $resource_path);
+
+			$resources_paths[$resource->id]  = $resource_path;
+			$resources_assoc[$resource_path] = $resource;
+		}
+
+		$this->_resources_paths = $resources_paths;
+		$this->_resources       = $resources_assoc;
+	}
+
 	/**
 	 * Loads all acl rules in $_acl container
 	 */
 	public function _grab_acl_rules()
 	{
-		$resources_paths = NULL;
-		$resources       = NULL;
-
-		$_resources = Jelly::query('resource')->select();
 		$acl        = Jelly::query('acl')->select();
 
-		foreach($_resources as $resource)
+		foreach($acl as $acl_line)
 		{
-			$resource_path = $resource->route_name . '.'
-			               . $resource->directory . '.'
-			               . $resource->controller . '.'
-			               . $resource->action . '.'
-			               . $resource->object_id;
-			$resources_paths[$resource->id]                  = $resource_path;
-			$this->_resources[$resource_path]                = $resource;
-			$resources[$resource->parent->id][$resource->id] = $resource;
-		}
+			$this->_acl[] = $this->_form_acl($acl_line, $acl_line->resource->id);
 
- 		foreach($acl as $acl_line)
-		{
-			$child_resources = (isset($resources[$acl_line->resource->id]))
-			                    ? $resources[$acl_line->resource->id]
-			                    : NULL;
+			$subresources = $acl_line->resource->childs;
 
-			if(count($child_resources))
+			if(count($subresources))
 			{
-				foreach($child_resources as $resource)
+				foreach($acl_line->resource->childs as $subresource)
 				{
-					$this->_acl[] = array(
-						'role'          => $acl_line->role->name,
-						'resource_path' => $resources_paths[$resource->id],
-						'action'        => $acl_line->action->name,
-						'regulation'    => $acl_line->regulation
-					);
+					$this->_acl[] = $this->_form_acl($acl_line, $subresource->id);
 				}
-			}
-			else
-			{
-				$this->_acl[] = array(
-					'role'          => $acl_line->role->name,
-					'resource_path' => $resources_paths[$acl_line->resource->id],
-					'action'        => $acl_line->action->name,
-					'regulation'    => $acl_line->regulation
-				);
 			}
 		}
 
 		if(empty($this->_acl))
 		{
-			throw new Kohana_Exception('ACL is empty. Fill it first!');
+			throw new Http_Exception_500('ACL is empty. Fill it first!');
 		}
+	}
+
+	public function _form_acl(Model_Acl $acl_line, $resource_id = NULL)
+	{
+		return array(
+			'role'          => $acl_line->role->name,
+			'resource_path' => $this->_resources_paths[$resource_id],
+			'action'        => $acl_line->action->name,
+			'regulation'    => $acl_line->regulation
+		);
+	}
+
+	public function _grab_actions()
+	{
+		$actions = Jelly::query('action')->select();
+
+		$all_score = 0;
+		foreach($actions as $action)
+		{
+			if($action->score)
+				$this->_actions[$action->name] = $action->score;
+
+			$all_score += $action->score;
+		}
+
+		$this->_actions['all'] = $all_score;
 	}
 
 	/**
