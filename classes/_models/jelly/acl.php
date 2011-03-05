@@ -4,7 +4,7 @@
  * Acl Model for Jelly ORM
  *
  * @package ACL
- * @author avis <smgladkovskiy@gmail.com>
+ * @author Sergei Gladkovskiy <smgladkovskiy@gmail.com>
  */
 class Model_Acl extends Jelly_Model {
 

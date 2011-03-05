@@ -1,9 +1,12 @@
 <?php defined('SYSPATH') or die('No direct access allowed.');
 
 /**
- * Class Acl
+ * IsOwner Assertion
  *
  * @package ACL
+ * @package ACL_Assertion
  * @author Sergei Gladkovskiy <smgladkovskiy@gmail.com>
  */
-class Acl extends Acl_Core {}
+abstract class Acl_Core_Assertion_IsOwner extends Acl_Assertion {
+	// test
+}

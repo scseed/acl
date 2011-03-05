@@ -4,27 +4,46 @@
  * Class ACL Core
  *
  * @package ACL
- * @author avis <smgladkovskiy@gmail.com>
+ * @author Sergei Gladkovskiy <smgladkovskiy@gmail.com>
  */
 abstract class Acl_Core {
 
-	// ACL Instances array
-	protected static $instances = array();
+	/**
+	 * Instances container
+	 * @var array
+	 */
+	protected static $instances;
 
-	// ACL container
-	protected $_acl = array();
+	/**
+	 * ACL container
+	 * @var array
+	 */
+	protected $_acl;
 
-	// resources container
-	protected $_resources = array();
+	/**
+	 * Resources container
+	 * @var array
+	 */
+	protected $_resources;
 
-	// Supported CRUD action names and it scores to count and compare
-	protected $_actions   = array();
+	/**
+	 * Resources paths container
+	 * @var array
+	 */
+	protected $_resources_paths;
+
+	/**
+	 * Supported CRUD action names and it scores to count and compare
+	 * @var array
+	 */
+	protected $_actions;
 
 	/**
 	 * ACL instance initiation
 	 *
-	 * @param  string $auth Auth supplier
-	 * @return object ACL
+	 * @static
+	 * @param  string $type
+	 * @return Acl
 	 */
 	public static function instance($type = 'default')
 	{
@@ -37,23 +56,18 @@ abstract class Acl_Core {
 		return self::$instances[$type];
 	}
 
-	/**
-	 * Fullfill ACL container on init
-	 */
 	public function __construct()
 	{
-		$this->_grab_resources();
-		$this->_grab_acl_rules();
-		$this->_grab_actions();
+		$this->grab_actions()->grab_resources()->grab_acl_rules();
 	}
 
 	/**
 	 * Inspects resources allowed to current $roles
 	 *
-	 * @param  array  $roles
+	 * @param  array $roles
 	 * @return array
 	 */
-	public function allowed_resources($roles)
+	public function allowed_resources(array $roles)
 	{
 		$resources = array();
 		foreach($roles as $role)
@@ -62,7 +76,12 @@ abstract class Acl_Core {
 			{
 				if($acl_line['role'] == $role AND $acl_line['regulation'] == 'allow')
 				{
-					$resources[$acl_line['resource_path']][$acl_line['role']] = $acl_line['action'];
+					if( ! isset($resources[$acl_line['resource_path']][$acl_line['role']]))
+					{
+						$resources[$acl_line['resource_path']][$acl_line['role']] = array();
+					}
+
+					array_push($resources[$acl_line['resource_path']][$acl_line['role']], $acl_line['action']);
 				}
 			}
 		}
@@ -71,71 +90,80 @@ abstract class Acl_Core {
 	}
 
 	/**
-	 * Inspects if current $roles allowed to act as poined in $actions array
-	 * in current $resource
+	 * Inspects if current $roles allowed to act as poined in $actions array of current $resource
 	 *
-	 * @param  array  $roles
-	 * @param  array $resource as array('route_name' => '...', 'directory' => '...', 'controller' => '...', 'action' => '...', 'object_id' => '...')
-	 * @param  array  $actions
-	 * @return boolean
+	 * @todo   Implement ACL Assertions
+	 *
+	 * @throws Http_Exception_401
+	 * @param  array        $roles
+	 * @param  array        $actions
+	 * @param  null|Request $request
+	 * @return bool
 	 */
-	public function is_allowed($roles, Request $request, $actions = array())
+	public function is_allowed(array $roles, array $actions = array(), Request $request = NULL)
 	{
+		if($request === NULL)
+			$request = Request::current();
+
 		$route = $request->route();
 
+		// Forms resource path
 		$directory  = ($request->directory() == '')         ? NULL : $request->directory();
 		$controller = ($request->controller() == 'welcome') ? NULL : $request->controller();
 		$action     = ($request->action() == 'index')       ? NULL : $request->action();
-		$param      = NULL; // @todo: think how it could be used...
 
 		$resource_path = array(
 			$route->name($request->route()),
 			$directory,
 			$controller,
 			$action,
-			$param,
 		);
 
 		$resource_path = implode('.', $resource_path);
 
-		// checking existance of a route in acl. If not => user is not alowed to do anything there
-		$allowed_resources = $this->allowed_resources($roles);
-
-		if( ! array_key_exists($resource_path, $allowed_resources))
-		{
-			return FALSE;
-		}
-
-		// Checking resource existance
+		// Checks resource existance in resources map
 		if( ! Arr::get($this->_resources, $resource_path, FALSE))
 		{
-//			$this->_add_resource($_resource);
+			throw new Http_Exception_401('Unauthorized access');
 		}
 
-		// counting minimal route score, based on acl
-		$route_action = 0;
+		// Checks existance of a route in alowed resources list
+		$allowed_resources = $this->allowed_resources($roles);
+		if( ! array_key_exists($resource_path, $allowed_resources))
+		{
+			throw new Http_Exception_401('Unauthorized access');
+		}
+
+		// Counts minimal route score, based on acl
+		$route_score = 0;
 		foreach($actions as $action)
 		{
-			$route_action += $this->_actions[$action];
+			$route_score += $this->_actions[$action];
 		}
 
 		$route_regulations = Arr::get($allowed_resources, $resource_path);
 
-		// counting user score for the route, based on acl
-		$user_action = 0;
-		foreach($route_regulations as $route_regulation)
+		// Counts user score for the route, based on acl
+		$user_actions = array();
+		foreach($route_regulations as $role => $actions)
 		{
-			$user_action += $this->_actions[$route_regulation];
+			$user_actions[$role] = 0;
+			foreach($actions as $action)
+			{
+				$user_actions[$role] += $this->_actions[$action];
+			}
 		}
 
-
-		// comparing scores
-		if($route_action > $user_action)
+		foreach($user_actions as $user_score)
 		{
-			return FALSE;
+			// comparing scores
+			if($route_score < $user_score)
+			{
+				return TRUE;
+			}
 		}
 
-		return TRUE;
+		throw new Http_Exception_401('Access denied');
 	}
 
 } // End Acl_Core

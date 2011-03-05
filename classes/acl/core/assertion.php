@@ -4,6 +4,9 @@
  * Class Acl
  *
  * @package ACL
+ * @package ACL_Assertion
  * @author Sergei Gladkovskiy <smgladkovskiy@gmail.com>
  */
-class Acl extends Acl_Core {}
+abstract class Acl_Core_Assertion {
+	// stub
+} // End Acl_Core_Assertion

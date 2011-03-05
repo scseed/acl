@@ -4,7 +4,7 @@
  * Resource Model for Jelly ORM
  *
  * @package ACL
- * @author avis <smgladkovskiy@gmail.com>
+ * @author Sergei Gladkovskiy <smgladkovskiy@gmail.com>
  */
 class Model_Resource extends Jelly_Model {
 
