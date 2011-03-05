@@ -1,10 +1,3 @@
-SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;
-SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
-SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='TRADITIONAL';
-
-CREATE SCHEMA IF NOT EXISTS `russiankohana_kohanaworld_dev` DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci ;
-USE `russiankohana_kohanaworld_dev` ;
-
 -- -----------------------------------------------------
 -- Table `roles`
 -- -----------------------------------------------------
@@ -21,7 +14,6 @@ CREATE  TABLE IF NOT EXISTS `roles` (
     REFERENCES `roles` (`id` )
     ON UPDATE CASCADE)
 ENGINE = InnoDB
-AUTO_INCREMENT = 3
 DEFAULT CHARACTER SET = utf8
 COLLATE = utf8_general_ci;
 
@@ -45,7 +37,6 @@ CREATE  TABLE IF NOT EXISTS `resources` (
     ON DELETE CASCADE
     ON UPDATE CASCADE)
 ENGINE = InnoDB
-AUTO_INCREMENT = 2
 DEFAULT CHARACTER SET = utf8
 COLLATE = utf8_general_ci;
 
@@ -127,9 +118,3 @@ CREATE  TABLE IF NOT EXISTS `assertions` (
     ON DELETE RESTRICT
     ON UPDATE CASCADE)
 ENGINE = InnoDB;
-
-
-
-SET SQL_MODE=@OLD_SQL_MODE;
-SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
-SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
