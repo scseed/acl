@@ -8,10 +8,24 @@
  */
 interface Acl_Core_Driver_Interface {
 
-	/* methods for classes that extend ACL as database drivers */
+	/**
+	 * @abstract
+	 * @return ACL
+	 */
 	function grab_actions();
+
+	/**
+	 * @abstract
+	 * @return ACL
+	 */
 	function grab_resources();
+
+	/**
+	 * @abstract
+	 * @return ACL
+	 */
 	function grab_acl_rules();
+
 	function _form_acl(Model_Acl $acl_line, $resource_id = NULL);
 //	function _add_resource(array $resource);
 
