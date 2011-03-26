@@ -124,7 +124,7 @@ abstract class Acl_Core {
 		// Checks resource existance in resources map
 		if( ! Arr::get($this->_resources, $resource_path, FALSE))
 		{
-			throw new Http_Exception_401('Unauthorized access');
+			throw new Http_Exception_401('Resource :resource is not in resources map', array(':resource' => $resource_path));
 		}
 
 		// Checks existance of a route in alowed resources list
