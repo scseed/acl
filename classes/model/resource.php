@@ -25,6 +25,11 @@ class Model_Resource extends Jelly_Model {
 					'allow_null' => TRUE,
 					'default'    => NULL,
 				)),
+				'childs' => Jelly::field('HasMany', array(
+					'foreign'    => 'resource.parent_id',
+					'column'     => 'parent_id',
+					'model'      => 'resource',
+				)),
 				'route_name' => Jelly::field('String'),
 				'directory'  => Jelly::field('String', array(
 					'allow_null' => TRUE,

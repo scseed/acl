@@ -17,11 +17,11 @@ class Model_Acl extends Jelly_Model {
 	{
 		$meta->table('acls')
 			->fields(array(
-				'id'          => Jelly::field('Primary'),
-				'role'        => Jelly::field('BelongsTo'),
-				'resource'    => Jelly::field('BelongsTo'),
-				'action'      => Jelly::field('BelongsTo'),
-				'regulation'  => Jelly::field('Enum', array(
+				'id' => Jelly::field('Primary'),
+				'role' => Jelly::field('BelongsTo'),
+				'resource' => Jelly::field('BelongsTo'),
+				'action' => Jelly::field('BelongsTo'),
+				'regulation' => Jelly::field('Enum', array(
 					'choices' => array('allow', 'deny'),
 				)),
 			))

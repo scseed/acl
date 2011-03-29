@@ -19,6 +19,7 @@ class Model_Action extends Jelly_Model {
 			->fields(array(
 				'id'   => Jelly::field('Primary'),
 				'name' => Jelly::field('String'),
+				'score' => Jelly::field('Integer'),
 			));
 	}
 } // End Model_Action

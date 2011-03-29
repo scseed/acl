@@ -131,7 +131,10 @@ abstract class Acl_Core {
 		$allowed_resources = $this->allowed_resources($roles);
 		if( ! array_key_exists($resource_path, $allowed_resources))
 		{
-			throw new Http_Exception_401('Unauthorized access');
+			throw new Http_Exception_401(
+				'Verifiable resource with resource path ":resource_path" not found in the list of available resources',
+				array(':resource_path' => $resource_path)
+			);
 		}
 
 		// Counts minimal route score, based on acl
