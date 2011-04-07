@@ -160,7 +160,7 @@ abstract class Acl_Core {
 		foreach($user_actions as $user_score)
 		{
 			// comparing scores
-			if($route_score < $user_score)
+			if($route_score <= $user_score)
 			{
 				return TRUE;
 			}
