@@ -35,4 +35,29 @@ class Model_Role extends Jelly_Model {
 			))
 			->load_with(array('parent'));
 	}
+
+	/**
+	 * Returns the ids of available roles.
+	 *
+	 * @param   array  $role
+	 * @return  array
+	 */
+	public function get_role_ids(array $role)
+	{
+		return Jelly::query('role')
+			->where('name', 'IN', $role)
+			->select()
+			->as_array(NULL, 'id');
+	}
+
+	/**
+	 * Loads a role based on name.
+	 *
+	 * @param   string  $role
+	 * @return  Jelly_Model
+	 */
+	public function get_role($role)
+	{
+		return Jelly::query('role')->where('name', '=', $role)->limit(1)->select();
+	}
 } // End Model_Role
