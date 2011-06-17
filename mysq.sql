@@ -59,7 +59,7 @@ COLLATE = utf8_general_ci;
 -- -----------------------------------------------------
 CREATE  TABLE IF NOT EXISTS `acls` (
   `id` SMALLINT(5) UNSIGNED NOT NULL AUTO_INCREMENT ,
-  `role_id` TINYINT(3) UNSIGNED NOT NULL ,
+  `role_id` INT(11) UNSIGNED NOT NULL ,
   `resource_id` SMALLINT(5) UNSIGNED NOT NULL ,
   `action_id` TINYINT(3) UNSIGNED NOT NULL ,
   `regulation` ENUM('allow','deny') NOT NULL DEFAULT 'allow' ,
@@ -118,3 +118,31 @@ CREATE  TABLE IF NOT EXISTS `assertions` (
     ON DELETE RESTRICT
     ON UPDATE CASCADE)
 ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table `actions` data
+-- -----------------------------------------------------
+INSERT INTO `actions` (`id`, `name`, `score`) VALUES
+(1, 'all', NULL),
+(2, 'read', 1),
+(3, 'create', 2),
+(4, 'update', 3),
+(5, 'delete', 4);
+
+
+-- -----------------------------------------------------
+-- Table `resources` data
+-- -----------------------------------------------------
+INSERT INTO `resources` (`id`, `parent_id`, `route_name`, `directory`, `controller`, `action`, `params`) VALUES
+(1, NULL, 'default', NULL, NULL, NULL, NULL),
+(2, NULL, 'admin', NULL, NULL, NULL, NULL);
+
+
+-- -----------------------------------------------------
+-- Table `acls` data
+-- -----------------------------------------------------
+INSERT INTO `acls` (`id`, `role_id`, `resource_id`, `action_id`, `regulation`) VALUES
+(1, 1, 1, 1, 'allow'),
+(2, 2, 1, 1, 'allow'),
+(3, 2, 2, 1, 'allow');
