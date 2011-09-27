@@ -48,7 +48,7 @@ abstract class Acl_Core {
 	public static function instance($type = 'default')
 	{
 		// if $auth is not defined, gets default auth supplier from the config file
-		$config = Kohana::config('acl');
+		$config = Kohana::$config->load('acl');
 
 		$acl_driver = 'Acl_Driver_' . ucfirst($config->ORM_driver);
 		self::$instances[$type] = new $acl_driver;
